@@ -22,20 +22,21 @@ namespace Infrastructure.Services {
             // get basket from the repo
             var basket = await _basketRepo.GetBasketAsync(basketId);
 
-            // get items from the product repo
-            var items = new List<OrderItem>();
+            // get items from the product repo (basket)
+            var orderItems = new List<OrderItem>();
             foreach (var item in basket.Items) {
                 var productItem = await _unitOfWork.Repository<Product>().GetByIdAsync(item.Id);
                 var itemOrdered = new ProductItemOrdered(productItem.Id, productItem.Name, productItem.PictureUrl);
                 var orderItem = new OrderItem(itemOrdered, productItem.Price, item.Quantity);
-                items.Add(orderItem);
+
+                orderItems.Add(orderItem);
             }
 
             // get delivery method from repo
             var deliveryMethod = await _unitOfWork.Repository<DeliveryMethod>().GetByIdAsync(deliveryMethodId);
 
             // calc subtotal
-            var subtotal = items.Sum(item => item.Price * item.Quantity);
+            var subtotal = orderItems.Sum(item => item.Price * item.Quantity);
 
             // check to see if order exists
             var spec = new OrderByPaymentIntentIdSpecification(basket.PaymentIntentId);
@@ -47,13 +48,16 @@ namespace Infrastructure.Services {
             }
 
             // create order
-            var order = new Order(items, buyerEmail, shippingAddress, deliveryMethod, subtotal, basket.PaymentIntentId);
+            var order = new Order(orderItems, buyerEmail, shippingAddress, deliveryMethod, subtotal, basket.PaymentIntentId);
             _unitOfWork.Repository<Order>().Add(order);
 
             // save to db
             var result = await _unitOfWork.Complete();
 
             if (result <= 0) return null;
+
+			// delete basket, newly added logic
+			await _basketRepo.DeleteBasketAsync(basketId);
 
             // return order
             return order;
@@ -64,13 +68,13 @@ namespace Infrastructure.Services {
         }
 
         public async Task<Order> GetOrderByIdAsync(int id, string buyerEmail) {
-            var spec = new OrdersWithItemsAndOrderingSpecification(id, buyerEmail);
+            var spec = new OrderEagerSpec(id, buyerEmail);
 
             return await _unitOfWork.Repository<Order>().GetEntityWithSpec(spec);
         }
 
         public async Task<IReadOnlyList<Order>> GetOrdersForUserAsync(string buyerEmail) {
-            var spec = new OrdersWithItemsAndOrderingSpecification(buyerEmail);
+            var spec = new OrderEagerSpec(buyerEmail);
 
             return await _unitOfWork.Repository<Order>().ListAsync(spec);
         }

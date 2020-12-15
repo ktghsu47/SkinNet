@@ -3,8 +3,7 @@ using AutoMapper;
 using Core.Entities;
 using Core.Entities.OrderAggregate;
 
-namespace API.Helpers
-{
+namespace API.Helpers {
 	public class MappingProfiles : Profile {
         public MappingProfiles() {
             CreateMap<Product, ProductToReturnDto>()

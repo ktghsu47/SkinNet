@@ -12,6 +12,7 @@ namespace API.Helpers {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class CachedAttribute : Attribute, IAsyncActionFilter {
         private readonly int _timeToLiveSeconds;
+		
         public CachedAttribute(int timeToLiveSeconds) {
             _timeToLiveSeconds = timeToLiveSeconds;
         }

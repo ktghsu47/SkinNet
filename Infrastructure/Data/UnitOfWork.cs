@@ -8,16 +8,9 @@ namespace Infrastructure.Data {
     public class UnitOfWork : IUnitOfWork {
         private readonly StoreContext _context;
         private Hashtable _repositories;
+
         public UnitOfWork(StoreContext context) {
             _context = context;
-        }
-
-        public async Task<int> Complete() {
-            return await _context.SaveChangesAsync();
-        }
-
-        public void Dispose() {
-            _context.Dispose();
         }
 
         public IGenericRepository<TEntity> Repository<TEntity>() where TEntity : BaseEntity {
@@ -33,6 +26,14 @@ namespace Infrastructure.Data {
             }
 
             return (IGenericRepository<TEntity>)_repositories[type];
+        }
+
+        public async Task<int> Complete() {
+            return await _context.SaveChangesAsync();
+        }
+
+        public void Dispose() {
+            _context.Dispose();
         }
     }
 }

@@ -7,6 +7,7 @@ using StackExchange.Redis;
 namespace Infrastructure.Services {
     public class ResponseCacheService : IResponseCacheService {
         private readonly IDatabase _database;
+		
         public ResponseCacheService(IConnectionMultiplexer redis) {
             _database = redis.GetDatabase();
         }
